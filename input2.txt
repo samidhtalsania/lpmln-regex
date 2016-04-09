@@ -50,4 +50,4 @@ Enter(l, s1) ^ Next(s1, s2) ^ !Malfunction(s1) => Location(l, s2).
 Enter(l0, s1) ^ Next(s1, s2) ^ Malfunction(s1) ^ PF(l0, l, s1) => Location(l, s2). 
 
 // Frame axioms
-Location(l, s1) ^ Next(s1, s2) ^ Location(l, s2) => Location(l, s2). 
+Location(l, s1) ^ Next(s1, s2) ^ Location(l, s3) => Location(l, s2). 

@@ -1,1 +1,1 @@
-./Debug/main.cpp.o ./Debug/Rule.cpp.o
+./Debug/main.cpp.o ./Debug/Predicate.cpp.o

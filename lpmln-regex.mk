@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=samidh
-Date                   :=08/04/16
+Date                   :=09/04/16
 CodeLitePath           :="/home/samidh/.codelite"
 LinkerName             :=/usr/bin/g++-4.8
 SharedObjectLinkerName :=/usr/bin/g++-4.8 -shared -fPIC
@@ -60,7 +60,7 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Rule.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) 
 
 
 
@@ -99,13 +99,13 @@ $(IntermediateDirectory)/main.cpp$(DependSuffix): main.cpp
 $(IntermediateDirectory)/main.cpp$(PreprocessSuffix): main.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/main.cpp$(PreprocessSuffix) "main.cpp"
 
-$(IntermediateDirectory)/Rule.cpp$(ObjectSuffix): Rule.cpp $(IntermediateDirectory)/Rule.cpp$(DependSuffix)
-	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/Rule.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Rule.cpp$(ObjectSuffix) $(IncludePath)
-$(IntermediateDirectory)/Rule.cpp$(DependSuffix): Rule.cpp
-	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Rule.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Rule.cpp$(DependSuffix) -MM "Rule.cpp"
+$(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix): Predicate.cpp $(IntermediateDirectory)/Predicate.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/Predicate.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Predicate.cpp$(DependSuffix): Predicate.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Predicate.cpp$(DependSuffix) -MM "Predicate.cpp"
 
-$(IntermediateDirectory)/Rule.cpp$(PreprocessSuffix): Rule.cpp
-	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Rule.cpp$(PreprocessSuffix) "Rule.cpp"
+$(IntermediateDirectory)/Predicate.cpp$(PreprocessSuffix): Predicate.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Predicate.cpp$(PreprocessSuffix) "Predicate.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)
