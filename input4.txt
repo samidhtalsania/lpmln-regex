@@ -1,0 +1,82 @@
+// Domain: Robot
+
+loc = {A, B, C}
+time = {1, 2, 3, 4}
+boolean = {T, F}
+object = {Obj, Rob}
+
+// fluent
+Location(object, loc!, time)
+HasObj(boolean!, time)
+
+// action
+Enter(loc, time)
+Pick(time)
+Drop(time)
+
+// PF
+Success(loc, time)
+
+Next(time, time)
+
+Next(1, 2).
+Next(2, 3).
+Next(3, 4).
+
+//ln(0.9)=-0.1054  ln(0.95)= -0.0513
+-0.0513 Success(A, t)
+-2.9957 !Success(A, t)
+-0.0513 Success(B, t)
+-2.9957 !Success(B, t)
+-0.1054 Success(C, t)
+-2.3026 !Success(C, t)
+
+// evidence
+Location(Rob, A, 1).
+Location(Obj, B, 1).
+HasObj(F, 1).
+Pick(2).
+Enter(C, 3).
+
+// No concurrency for actions
+!Enter(l, t) v !Pick(t).
+!Enter(l, t) v !Drop(t).
+!Pick(t) v !Drop(t).
+
+// Constraint
+!Enter(l1, t) v !Enter(l2, t) v l1=l2.
+!Enter(l, t) v !Location(Rob, l, t).
+!Pick(t) v HasObj(F, t).
+!Pick(t) v !Location(Rob, l1, t) v !Location(Obj, l2, t) v l1=l2.
+!Drop(t) v HasObj(T, t).
+
+// Effect of Enter
+Enter(l, t1) ^ Success(l, t1) ^ Next(t1, t2) => Location(Rob, l, t2).
+Enter(l, t1) ^ !Success(l, t1) ^ Next(t1, t2) => Location(Rob, A, t2) v Location(Rob, B, t2) v Location(Rob, C, t2).
+
+// Effect of Pick
+Pick(t1) ^ Next(t1, t2) => HasObj(T, t2).
+
+// Effect of Drop
+Drop(t1) ^ Next(t1, t2) => HasObj(F, t2).
+
+// Change location of Obj at t2 when HasObj(T, t1)
+HasObj(T, t1) ^ Location(Rob, l, t2) ^ Next(t1, t2) => Location(Obj, l, t2).
+
+// Actions are exogenous
+Enter(l, t) => Enter(l, t).
+Pick(t) => Pick(t).
+Drop(t) => Drop(t).
+
+// Fluents are inertial
+Location(o, l, t1) ^ Location(o, l, t2) ^ Next(t1, t2) => Location(o, l, t2).
+HasObj(b, t1) ^ HasObj(b, t2) ^ Next(t1, t2) => HasObj(b, t2).
+
+//************* Completion
+// completion for Location
+Location(Rob, l, t2) ^ Next(t1, t2) => ( Enter(l, t1) ^ Success(l, t1) ) v ( Enter(A, t1) ^ !Success(A, t1) ) v ( Enter(B, t1) ^ !Success(B, t1) ) v ( Enter(C, t1) ^ !Success(C, t1) ) v Location(Rob, l, t1).
+Location(Obj, l, t2) ^ Next(t1, t2) =>  ( HasObj(T, t1) ^ Location(Rob, l, t2) ) v Location(Obj, l, t1).
+
+// completion for HasObj
+HasObj(T, t2) ^ Next(t1, t2) => Pick(t1) v HasObj(T, t1).
+HasObj(F, t2) ^ Next(t1, t2) => Drop(t1) v HasObj(F, t1).

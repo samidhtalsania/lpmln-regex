@@ -1,0 +1,60 @@
+//Declaration
+
+//Objects
+
+day = {1, 2, 3, 4, 5}
+
+patch = {P1, P2}
+
+bool = {T, F}
+
+
+//Attibutes
+
+HiddenIn(patch)
+
+FoundPf(day)
+
+Look(patch, day)
+
+Found(patch, day)
+
+
+// Choice Rules
+
+HiddenIn(x) => HiddenIn(x).
+
+FoundPf(x) => FoundPf(x).
+
+Look(x, y) => Look(x, y).
+
+
+// Acorn is hidden in Patch 1 with probability 0.8­
+
+0.2231 HiddenIn(P1)
+
+1.6093 HiddenIn(P2)
+
+
+// There is 0.2 chance to find the acorn in the right patch­
+
+1.6093 FoundPf(x)
+
+0.2231 !FoundPf(x)
+
+LookRightPatch(patch, day)
+
+Look(x, y) ^ HiddenIn(x) => LookRightPatch(x, y).
+
+LookRightPatch(x, y) ^ FoundPf(y) => Found(x, y).
+
+
+// UEC
+
+EXIST x HiddenIn(x).
+
+!EXIST x,y (HiddenIn(x) ^ HiddenIn(y) ^ x != y).
+
+EXIST x Look(x, y).
+
+!EXIST x1, x2 (Look(x1, y) ^ Look(x2, y) ^ x1 != x2).

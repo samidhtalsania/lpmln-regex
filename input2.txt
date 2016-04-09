@@ -1,0 +1,53 @@
+//Declaration
+//Objects
+step = {0, 1}
+loc = {Hall, R1, R2, R3}
+boolean = {T, F}
+
+//Fluents
+Location(loc, step)
+Malfunction(step)
+
+//Actions Enter(loc, step)
+//Probabilistic Facts
+PF(loc, loc, step) 
+// ln(0.5) = ­0.6931 
+// ln(0.25) = ­1.3863 ­
+0.6931 PF(R1, R1, s)
+1.3863 PF(R1, R2, s)
+1.3863 PF(R1, R3, s)
+0.6931 PF(R2, R2, s)
+1.3863 PF(R2, R1, s)
+1.3863 PF(R2, R3, s) 
+0.6931 PF(R3, R3, s)
+1.3863 PF(R3, R1, s)
+1.3863 PF(R3, R2, s)
+
+Next(step, step)
+Next(0, 1).
+
+// UEC
+EXIST l(Location(l, s)).
+!EXIST l1, l2(Location(l1, s) ^ Location(l2, s) ^ l1 != l2).
+
+EXIST l(PF(x, l, s) ^ l != Hall).
+!EXIST l1, l2(PF(x, l1, s) ^ PF(x, l2, s) ^ l1 != l2).
+
+// The robot can attempt to enter one room at a time
+!EXIST l1, l2(Enter(l1, s) ^ Enter(l2, s) ^ l1 != l2).
+
+// Actions and Malfunction are exogenous
+Malfunction(x) => Malfunction(x).
+
+Enter(l, x) => Enter(l,x).
+
+PF(x, y, z) => PF(x, y, z).
+
+// Effect of Actions 
+// ­ Without malfunction
+Enter(l, s1) ^ Next(s1, s2) ^ !Malfunction(s1) => Location(l, s2).
+// ­ With malfunction
+Enter(l0, s1) ^ Next(s1, s2) ^ Malfunction(s1) ^ PF(l0, l, s1) => Location(l, s2). 
+
+// Frame axioms
+Location(l, s1) ^ Next(s1, s2) ^ Location(l, s2) => Location(l, s2). 
