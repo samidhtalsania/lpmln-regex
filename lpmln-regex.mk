@@ -2,18 +2,18 @@
 ## Auto Generated makefile by CodeLite IDE
 ## any manual changes will be erased      
 ##
-## Debug
+## Release
 ProjectName            :=lpmln-regex
-ConfigurationName      :=Debug
+ConfigurationName      :=Release
 WorkspacePath          := "/home/samidh/Documents/lpmln"
 ProjectPath            := "/home/samidh/Documents/lpmln/lpmln-regex"
-IntermediateDirectory  :=./Debug
+IntermediateDirectory  :=./Release
 OutDir                 := $(IntermediateDirectory)
 CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=samidh
-Date                   :=09/04/16
+Date                   :=10/04/16
 CodeLitePath           :="/home/samidh/.codelite"
 LinkerName             :=/usr/bin/g++-4.8
 SharedObjectLinkerName :=/usr/bin/g++-4.8 -shared -fPIC
@@ -28,7 +28,7 @@ LibraryPathSwitch      :=-L
 PreprocessorSwitch     :=-D
 SourceSwitch           :=-c 
 OutputFile             :=$(IntermediateDirectory)/$(ProjectName)
-Preprocessors          :=
+Preprocessors          :=$(PreprocessorSwitch)NDEBUG 
 ObjectSwitch           :=-o 
 ArchiveOutputSwitch    := 
 PreprocessOnlySwitch   :=-E
@@ -50,8 +50,8 @@ LibPath                :=$(LibraryPathSwitch)/usr/lib/x86_64-linux-gnu/  $(Libra
 AR       := /usr/bin/ar rcu
 CXX      := /usr/bin/g++-4.8
 CC       := /usr/bin/gcc-4.8
-CXXFLAGS :=  -g -O0 -std=c++11 -Wall $(Preprocessors)
-CFLAGS   :=  -g -O0 -Wall $(Preprocessors)
+CXXFLAGS :=  -O2 -std=c++11 -Wall $(Preprocessors)
+CFLAGS   :=  -O2 -Wall $(Preprocessors)
 ASFLAGS  := 
 AS       := /usr/bin/as
 
@@ -79,11 +79,11 @@ $(OutputFile): $(IntermediateDirectory)/.d $(Objects)
 	$(LinkerName) $(OutputSwitch)$(OutputFile) @$(ObjectsFileList) $(LibPath) $(Libs) $(LinkOptions)
 
 MakeIntermediateDirs:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./Release || $(MakeDirCommand) ./Release
 
 
 $(IntermediateDirectory)/.d:
-	@test -d ./Debug || $(MakeDirCommand) ./Debug
+	@test -d ./Release || $(MakeDirCommand) ./Release
 
 PreBuild:
 
@@ -113,6 +113,6 @@ $(IntermediateDirectory)/Predicate.cpp$(PreprocessSuffix): Predicate.cpp
 ## Clean
 ##
 clean:
-	$(RM) -r ./Debug/
+	$(RM) -r ./Release/
 
 

@@ -1,1 +1,1 @@
-./Debug/main.cpp.o ./Debug/Predicate.cpp.o
+./Release/main.cpp.o ./Release/Predicate.cpp.o

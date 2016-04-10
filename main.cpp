@@ -17,6 +17,10 @@
 
 #include "Predicate.h"
 
+
+#define TRUE 1
+#define FALSE 0
+
 namespace ba = boost::algorithm;
 namespace io = boost::iostreams; 
 namespace po = boost::program_options; 
@@ -27,32 +31,19 @@ typedef std::string HEAD;
 typedef std::string BODY;
 typedef std::string ATOM;
 typedef bool BOOLEAN;
+typedef long unsigned int lint;
+typedef std::map<std::string, std::vector<lint>> MAP;
 
-//#define DEBUG
-
-struct predCompare
-{
-	bool operator() (const Predicate* lhs, const Predicate* rhs) const
-	{
-		
-		return std::strcmp(lhs->token.c_str(),rhs->token.c_str()) < 0;
-	}
-};
-
-#ifdef DEBUG
-std::unique_ptr<Predicate> debug1;
-std::unique_ptr<Predicate> debug2;
-#endif
 
 std::unordered_multimap<HEAD, BODY> headBodyMap;
-std::map<Predicate*, BOOLEAN, predCompare> predMap;
+std::map<std::string, std::vector<lint>> predMapStr;
 std::string uniqueVars[] = {"_a","_b","_c","_d","_e","_f","_g","_h","_i","_j","_k","_l","_m","_n"};
 
 int charCount = 0;
 
 int main(int argc,char *argv[])
 {
-	parse("/home/samidh/Documents/lpmln/lpmln-regex/input2.txt");
+	parse("/home/samidh/Documents/lpmln/lpmln-regex/input.txt");
 
 	return 0;
 }
@@ -68,8 +59,7 @@ void matchPredicate(std::string str)
 	boost::match_results<std::string::const_iterator> what;
 	boost::match_flag_type flags = boost::match_default;
 	std::size_t found = str.find("EXIST");
-	
-	Predicate* pred;
+
 	
 	if(boost::regex_match(str, exprHardrule) && found == std::string::npos)
 	{
@@ -93,22 +83,13 @@ void matchPredicate(std::string str)
 		temp.append("<=>");
 		temp.append(what[1]).append(what[2]);
 		std::string predName(what[1]);
-		pred = new Predicate;
 		
-		
-		pred->token = predName;
-		pred->vars = tokens.size();
-		
-		if(!(predMap.count(pred) > 0))
-			predMap[pred] = true;
+		MAP::iterator it = predMapStr.find(predName);
+		if(it != predMapStr.end())
+			predMapStr[predName] = std::vector<lint>{TRUE,tokens.size()};
 		else
-			delete pred;
-		
-		
+			predMapStr.insert(std::pair<std::string, std::vector<lint>>(predName,std::vector<lint>{TRUE,tokens.size()})) ;
 
-		#ifdef DEBUG
-		debug1 = std::unique_ptr<Predicate>(pred);
-		#endif
 		
 		for(unsigned int i=0; i<tokens.size();i++)
 		{
@@ -135,10 +116,10 @@ void matchRules(std::string str)
 	end = str.end();
 	boost::match_results<std::string::const_iterator> what;
 	boost::match_flag_type flags = boost::match_default;
-	Predicate* pred;
+//	Predicate* pred;
 	if(boost::regex_match(str,expr))
 	{
-		regex_search(start, end, what, expr, flags);
+		boost::regex_search(start, end, what, expr, flags);
 		std::string first = what[3];
 		std::string second = what[1];
 		
@@ -147,34 +128,29 @@ void matchRules(std::string str)
 		{
 			headBodyMap.insert(std::make_pair(first ,second));
 			std::vector<std::string> tokens;
-			boost::split(tokens,first,boost::is_any_of("^"), boost::token_compress_on);
 			
+			//Split conjunctive head terms
+			boost::split(tokens,first,boost::is_any_of("^"), boost::token_compress_on);
 			boost::regex tokenExpr("([a-zA-Z]+)(\\()([A-Za-z0-9,]+)(\\))");
 			
 			for(unsigned int i = 0; i<tokens.size(); i++)
 			{
 				start = tokens[i].begin();
 				end = tokens[i].end();
+				
+				//Find local variables in each of the conjunctive head terms
 				boost::regex_search(start,end,what, tokenExpr, flags);
+				
 				std::vector<std::string> vars;
+				
+				//Split local variables by comma
 				boost::split(vars,tokens[i],boost::is_any_of(","), boost::token_compress_on);
-				pred = new Predicate;
 				
-				pred->token = what[1];
-				pred->vars = vars.size();
-				
-				if(!(predMap.count(pred) > 0))
-					predMap[pred] = false;
-				else
-					delete pred;
-
-				
+				MAP::iterator it = predMapStr.find(what[1]);
+				if(it == predMapStr.end())
+					predMapStr.insert(std::pair<std::string, std::vector<lint>>(what[1],std::vector<lint>{TRUE,tokens.size()})) ;
 				
 
-				#ifdef DEBUG
-					std::cout << &pred <<std::endl;
-				#endif
-//				delete pred;
 			}
 			boost::split(tokens,second,boost::is_any_of("^"), boost::token_compress_on);
 			for(unsigned int i = 0; i<tokens.size(); i++)
@@ -184,19 +160,10 @@ void matchRules(std::string str)
 				boost::regex_search(start,end,what, tokenExpr, flags);
 				std::vector<std::string> vars;
 				boost::split(vars,tokens[i],boost::is_any_of(","), boost::token_compress_on);
-				pred = new Predicate;
-				
-				pred->token = what[1];
-				pred->vars = vars.size();
-				if(!(predMap.count(pred) > 0))
-					predMap[pred] = false;
-				else
-					delete pred;
-					
-				#ifdef DEBUG
-					std::cout << &pred <<std::endl;
-				#endif
-//				delete pred;
+
+				MAP::iterator it = predMapStr.find(what[1]);
+				if(it == predMapStr.end())
+					predMapStr.insert(std::pair<std::string, std::vector<lint>>(what[1],std::vector<lint>{FALSE,vars.size()})) ;
 			}
 		}
 	}
@@ -237,7 +204,7 @@ int parse(std::string filename)
 		}
 		catch(std::exception& e) {
 	         std::cout << e.what() << '\n';
-	         outfile.close();
+	         //outfile.close();
 	         return -1;
 	    }
 	}
@@ -251,7 +218,7 @@ int parse(std::string filename)
 	
 	// Completion post processing
 	
-	Predicate* pred;
+
 	boost::regex expr("([a-zA-Z]+)(\\()([A-Za-z0-9,]+)(\\))");
 	boost::match_results<std::string::const_iterator> what;
 	std::string::const_iterator start, end;
@@ -266,7 +233,6 @@ int parse(std::string filename)
 			
 			comp.append(uniq_key).append("=>");
 			
-			
 			boost::split(preds, uniq_key, boost::is_any_of("^"),boost::token_compress_on);
 			
 			
@@ -277,14 +243,7 @@ int parse(std::string filename)
 				end = temp.end();
 				boost::regex_search(start, end, what, expr, flags);
 				boost::split(atoms, temp, boost::is_any_of(","),boost::token_compress_on);
-				pred = new Predicate;
-				pred->token = what[1];
-				pred->vars = atoms.size();
-				
-				if(!(predMap.count(pred) > 0))
-					predMap[pred] = true;
-				else
-					delete pred;
+				predMapStr[what[1]] = std::vector<lint>{1, atoms.size()};				
 			}
 
 			auto it_bounds = headBodyMap.equal_range(uniq_key);
@@ -298,29 +257,17 @@ int parse(std::string filename)
 			std::cout<<comp<<std::endl;
 	}
 	
-	#ifdef DEBUG
-		int x = predMap.size();
-		std::cout<<"Unique Predicates:"<<x<<std::endl;
-	#endif
 
-	for (auto it=predMap.begin(); it!=predMap.end(); ++it)
+	for (auto it=predMapStr.begin(); it!=predMapStr.end(); ++it)
 	{
 		std::string str;
 		
-		if(it->second == false)
+		if(it->second[0] == FALSE)
 		{
-			#ifdef DEBUG
-			debug2 = std::unique_ptr<Predicate>(it->first.get());
-			if(debug1 == debug2)
-			{
-				int x = 10;
-			}
-			#endif
-			if(!((it->first)->token[0] == '!'))
-				str.append("!");
-			str.append((it->first)->token);
+			str.append("!");
+			str.append((it->first));
 			str += "(";
-			for(int i=0;i<(it->first)->vars;i++)
+			for(unsigned int i=0;i<(it->second)[1];i++)
 			{
 				if(charCount == sizeof(uniqueVars)/sizeof(uniqueVars[0]))
 				{
@@ -336,10 +283,6 @@ int parse(std::string filename)
 		}
 	}
 
-	
-	for (auto it=predMap.begin(); it!=predMap.end(); ++it)
-		delete it->first;
-		
 	return 0;
 	
 }
