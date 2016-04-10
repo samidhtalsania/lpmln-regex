@@ -32,10 +32,10 @@ typedef bool BOOLEAN;
 
 struct predCompare
 {
-	bool operator() (const std::unique_ptr<Predicate>& lhs, const std::unique_ptr<Predicate>& rhs) const
+	bool operator() (const Predicate* lhs, const Predicate* rhs) const
 	{
 		
-		return std::strcmp(lhs.get()->token.c_str(),rhs.get()->token.c_str()) < 0;
+		return std::strcmp(lhs->token.c_str(),rhs->token.c_str()) < 0;
 	}
 };
 
@@ -45,7 +45,7 @@ std::unique_ptr<Predicate> debug2;
 #endif
 
 std::unordered_multimap<HEAD, BODY> headBodyMap;
-std::map<std::unique_ptr<Predicate>, BOOLEAN, predCompare> predMap;
+std::map<Predicate*, BOOLEAN, predCompare> predMap;
 std::string uniqueVars[] = {"_a","_b","_c","_d","_e","_f","_g","_h","_i","_j","_k","_l","_m","_n"};
 
 int charCount = 0;
@@ -94,13 +94,16 @@ void matchPredicate(std::string str)
 		temp.append(what[1]).append(what[2]);
 		std::string predName(what[1]);
 		pred = new Predicate;
-		#ifdef DEBUG
-			std::cout << &pred <<std::endl;
-		#endif
+		
+		
 		pred->token = predName;
 		pred->vars = tokens.size();
 		
-		predMap[std::unique_ptr<Predicate>(pred)] = true;
+		if(!(predMap.count(pred) > 0))
+			predMap[pred] = true;
+		else
+			delete pred;
+		
 		
 
 		#ifdef DEBUG
@@ -138,8 +141,6 @@ void matchRules(std::string str)
 		regex_search(start, end, what, expr, flags);
 		std::string first = what[3];
 		std::string second = what[1];
-//		ba::trim(first);
-//		ba::trim(second);
 		
 		// If it is not a choice rule
 		if(!(first.compare(second)==0))
@@ -158,20 +159,15 @@ void matchRules(std::string str)
 				std::vector<std::string> vars;
 				boost::split(vars,tokens[i],boost::is_any_of(","), boost::token_compress_on);
 				pred = new Predicate;
+				
 				pred->token = what[1];
 				pred->vars = vars.size();
 				
-				try
-				{
-					if(!predMap[std::unique_ptr<Predicate>(pred)])
-					{
-						predMap[std::unique_ptr<Predicate>(pred)] = false;
-					}
-				}
-				catch(std::exception& e)
-				{
-					
-				}
+				if(!(predMap.count(pred) > 0))
+					predMap[pred] = false;
+				else
+					delete pred;
+
 				
 				
 
@@ -189,9 +185,14 @@ void matchRules(std::string str)
 				std::vector<std::string> vars;
 				boost::split(vars,tokens[i],boost::is_any_of(","), boost::token_compress_on);
 				pred = new Predicate;
+				
 				pred->token = what[1];
 				pred->vars = vars.size();
-				predMap[std::unique_ptr<Predicate>(pred)] = false;
+				if(!(predMap.count(pred) > 0))
+					predMap[pred] = false;
+				else
+					delete pred;
+					
 				#ifdef DEBUG
 					std::cout << &pred <<std::endl;
 				#endif
@@ -210,7 +211,6 @@ int parse(std::string filename)
 	input_file_name = filename.c_str();
 	
 	std::ifstream file(input_file_name, std::ios_base::in | std::ios_base::binary);
-	std::ofstream outfile;
 	std::vector<std::string> keys;
 	
 
@@ -228,7 +228,6 @@ int parse(std::string filename)
 				if(!str.empty())
 	            {
 					str.erase(std::remove(str.begin(),str.end(),' '),str.end());
-//					matchDomains(str);
 					matchRules(str);
 					matchPredicate(str);
 				}
@@ -281,7 +280,11 @@ int parse(std::string filename)
 				pred = new Predicate;
 				pred->token = what[1];
 				pred->vars = atoms.size();
-				predMap[std::unique_ptr<Predicate>(pred)] = true;
+				
+				if(!(predMap.count(pred) > 0))
+					predMap[pred] = true;
+				else
+					delete pred;
 			}
 
 			auto it_bounds = headBodyMap.equal_range(uniq_key);
@@ -313,11 +316,11 @@ int parse(std::string filename)
 				int x = 10;
 			}
 			#endif
-			if(!((it->first).get()->token[0] == '!'))
+			if(!((it->first)->token[0] == '!'))
 				str.append("!");
-			str.append((it->first).get()->token);
+			str.append((it->first)->token);
 			str += "(";
-			for(int i=0;i<(it->first).get()->vars;i++)
+			for(int i=0;i<(it->first)->vars;i++)
 			{
 				if(charCount == sizeof(uniqueVars)/sizeof(uniqueVars[0]))
 				{
@@ -333,15 +336,10 @@ int parse(std::string filename)
 		}
 	}
 
-	#ifdef DEBUG
+	
 	for (auto it=predMap.begin(); it!=predMap.end(); ++it)
-	{
-		std::cout<<it->first.get()->token<<it->first.get()->vars<<it->second<<std::endl;
-	}
-	#endif
-	if(outfile.is_open()){
-		outfile.close();
-	}
+		delete it->first;
+		
 	return 0;
 	
 }
