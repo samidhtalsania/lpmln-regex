@@ -3,7 +3,7 @@ Bird(entity)
 ResidentBird(entity)
 MigratoryBird(entity)
 
-ResidentBird(x) => Bird(x).
+ResidentBird(y) => Bird(x).
 MigratoryBird(x) => Bird(x).
 !(ResidentBird(x) ^ MigratoryBird(x)).
 

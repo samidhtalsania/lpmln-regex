@@ -1,0 +1,44 @@
+room = {OUT, LIVING1, LIVING2, KITCHEN, BEDROOM1, BEDROOM2}
+switchID = {SL_living1, SL_living2, SL_kitchen, SL_bedroom1_1, SL_bedroom1_2, SL_bedroom2}
+personID = {ANN, BOB}
+doorID = {DOOR1, DOOR2, DOOR3, STAIR4, DOOR5}
+brightness = {BRIGHT, DARK}
+boolean= {T, F}
+time = {BEFORE, NEXT}
+
+//** Base Knowledge:
+LocStatic(switchID, room)
+Control(switchID, LIGHT, room)
+Door(doorID, room, room)
+
+// No more "time" for most of the predicates: instead of time, we use state transition
+
+//** LLE:
+Sensor_Out(brightness) 
+Sensor_Door(doorID, personID)
+Sensor_Touch(switchID) //could extend to buttonID
+
+//** IHLE:
+TurnOnLight(room)
+TurnOffLight(room)
+
+//** FHLE
+LocDynamic(personID, room, time)//personID could extend to objectID
+Light(boolean, room, time) //The only main light for each room
+NoOne(room, time)
+
+Sensor_Out(DARK), Sensor_Door(door, person), LocDynamic(person, room1, BEFORE), Door(door, room1, room2), Light(F, room2, BEFORE), NoOne(room2, BEFORE) => TurnOnLight(room2).
+
+Sensor_Touch(switch), Control(switch, LIGHT, room), Light(F, room, BEFORE) => TurnOnLight(room).
+
+
+
+Sensor_Touch(switch), Control(switch, LIGHT, room), Light(T, room, BEFORE) => TrunOffLight(room).
+
+//** FHLE <- IHLE
+TurnOnLight(room) => Light(T, room, NEXT).
+TurnOffLight(room) => Light(F, room, NEXT). 
+
+//** FHLE <- FHLE
+Sensor_Door(door, person), LocDynamic(person, room1, BEFORE), Door(door, room1, room2) => LocDynamic(person, room2, NEXT).
+

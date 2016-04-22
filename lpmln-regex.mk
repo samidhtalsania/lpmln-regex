@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=samidh
-Date                   :=10/04/16
+Date                   :=22/04/16
 CodeLitePath           :="/home/samidh/.codelite"
 LinkerName             :=/usr/bin/g++-4.8
 SharedObjectLinkerName :=/usr/bin/g++-4.8 -shared -fPIC
@@ -60,7 +60,7 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) $(IntermediateDirectory)/Domain.cpp$(ObjectSuffix) $(IntermediateDirectory)/Completion.cpp$(ObjectSuffix) $(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix) $(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix) 
 
 
 
@@ -106,6 +106,38 @@ $(IntermediateDirectory)/Predicate.cpp$(DependSuffix): Predicate.cpp
 
 $(IntermediateDirectory)/Predicate.cpp$(PreprocessSuffix): Predicate.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Predicate.cpp$(PreprocessSuffix) "Predicate.cpp"
+
+$(IntermediateDirectory)/Domain.cpp$(ObjectSuffix): Domain.cpp $(IntermediateDirectory)/Domain.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/Domain.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Domain.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Domain.cpp$(DependSuffix): Domain.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Domain.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Domain.cpp$(DependSuffix) -MM "Domain.cpp"
+
+$(IntermediateDirectory)/Domain.cpp$(PreprocessSuffix): Domain.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Domain.cpp$(PreprocessSuffix) "Domain.cpp"
+
+$(IntermediateDirectory)/Completion.cpp$(ObjectSuffix): Completion.cpp $(IntermediateDirectory)/Completion.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/Completion.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Completion.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Completion.cpp$(DependSuffix): Completion.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Completion.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Completion.cpp$(DependSuffix) -MM "Completion.cpp"
+
+$(IntermediateDirectory)/Completion.cpp$(PreprocessSuffix): Completion.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Completion.cpp$(PreprocessSuffix) "Completion.cpp"
+
+$(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix): FactCompletion.cpp $(IntermediateDirectory)/FactCompletion.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/FactCompletion.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/FactCompletion.cpp$(DependSuffix): FactCompletion.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/FactCompletion.cpp$(DependSuffix) -MM "FactCompletion.cpp"
+
+$(IntermediateDirectory)/FactCompletion.cpp$(PreprocessSuffix): FactCompletion.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/FactCompletion.cpp$(PreprocessSuffix) "FactCompletion.cpp"
+
+$(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix): RuleCompletion.cpp $(IntermediateDirectory)/RuleCompletion.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/RuleCompletion.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/RuleCompletion.cpp$(DependSuffix): RuleCompletion.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/RuleCompletion.cpp$(DependSuffix) -MM "RuleCompletion.cpp"
+
+$(IntermediateDirectory)/RuleCompletion.cpp$(PreprocessSuffix): RuleCompletion.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/RuleCompletion.cpp$(PreprocessSuffix) "RuleCompletion.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

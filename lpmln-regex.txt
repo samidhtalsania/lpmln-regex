@@ -1,1 +1,1 @@
-./Release/main.cpp.o ./Release/Predicate.cpp.o
+./Debug/main.cpp.o ./Debug/Predicate.cpp.o ./Debug/Domain.cpp.o ./Debug/Completion.cpp.o ./Debug/FactCompletion.cpp.o ./Debug/RuleCompletion.cpp.o
