@@ -21,6 +21,8 @@
 #include "RuleCompletion.h"
 
 
+//TODO comment handling. //next(0,1) will result in fact completion
+
 #define TRUE 1
 #define FALSE 0
 
@@ -341,19 +343,11 @@ int parse(std::string filename)
 	// Fact completion
 	for(unsigned int i=0;i<facts.size();i++)
 	{
+
+
 		int count = 0;
 		std::string op("");
-		
-		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
-		{
-			op.append(uniqueVars[count++]);
-			op.append("=");
-			op.append(facts.at(i).head.getTokens().at(j));
-			op.append(" v ");
-		}
-		
-		op = op.substr(0,op.size()-3);
-		op.append("<=>");
+
 		op.append(facts.at(i).head.getVar());
 		op.append("(");
 		count = 0;
@@ -363,7 +357,20 @@ int parse(std::string filename)
 			op.append(",");
 		}
 		op = op.substr(0,op.size()-1);
-		op.append(").");
+		op.append(")");
+		
+		op.append("=>");
+		count=0;
+		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
+		{
+			op.append(uniqueVars[count++]);
+			op.append("=");
+			op.append(facts.at(i).head.getTokens().at(j));
+			op.append(" ^ ");
+		}
+		
+		op = op.substr(0,op.size()-3);
+		op.append(".");
 		std::cout<<op<<std::endl;
 		
 		//Since this paricular predicate is completed we set its completion bit to true if this is found in the predicates set. 
@@ -382,6 +389,8 @@ int parse(std::string filename)
 	
 	
 	// Rule completion
+	// Needs to be redone
+	// Follow 4 step procedure.
 	for (std::set<Predicate>::iterator it=predicates.begin(); it!=predicates.end(); ++it)
 	{
 		//Now for each predicate, get its body from the rules set concat it take care of orphan variables and output the results
@@ -641,78 +650,6 @@ int parse(std::string filename)
 //		std::cout<<"//Correct";
 //	else
 //		std::cout<<"//InCorrect";
-	
-	
-	
-	
-	
-	
-	
-	
-	//
-//	boost::regex expr("([a-zA-Z]+)(\\()([A-Za-z0-9,]+)(\\))");
-//	boost::match_results<std::string::const_iterator> what;
-//	std::string::const_iterator start, end;
-//	boost::match_flag_type flags = boost::match_default;
-//	std::vector<std::string> preds;
-//	std::vector<std::string> atoms;
-//	
-//	for (auto iter=headBodyMap.begin(); iter!=headBodyMap.end(); iter=headBodyMap.equal_range(iter->first).second)
-//	{
-//			std::string uniq_key=iter->first;
-//			std::string comp("");
-//			
-//			comp.append(uniq_key).append("=>");
-//			
-//			boost::split(preds, uniq_key, boost::is_any_of("^"),boost::token_compress_on);
-//			
-//			
-//			for(std::vector<std::string>::iterator it = preds.begin(); it != preds.end(); ++it)
-//			{
-//				std::string temp = *it;
-//				start = temp.begin();
-//				end = temp.end();
-//				boost::regex_search(start, end, what, expr, flags);
-//				boost::split(atoms, temp, boost::is_any_of(","),boost::token_compress_on);
-//				predMapStr[what[1]] = std::vector<lint>{1, atoms.size()};				
-//			}
-//
-//			auto it_bounds = headBodyMap.equal_range(uniq_key);
-//			
-//			for (auto it=it_bounds.first; it!=it_bounds.second; it++)
-//			{
-//				comp.append(it->second).append(" v ");
-//			}
-//			comp = comp.substr(0,comp.length()-2);
-//			comp.append(".");
-//			std::cout<<comp<<std::endl;
-//	}
-//	
-//
-//	for (auto it=predMapStr.begin(); it!=predMapStr.end(); ++it)
-//	{
-//		std::string str;
-//		
-//		if(it->second[0] == FALSE)
-//		{
-//			str.append("!");
-//			str.append((it->first));
-//			str += "(";
-//			for(unsigned int i=0;i<(it->second)[1];i++)
-//			{
-//				if(charCount == sizeof(uniqueVars)/sizeof(uniqueVars[0]))
-//				{
-//					charCount = 0;
-//				}
-//				str += uniqueVars[charCount++];
-//				str += ",";
-//			}
-//			str = str.substr(0,str.length()-1);
-//			str += ")";
-//			str += ".";
-//			std::cout<<str<<std::endl;
-//		}
-//	}
 
 	return 0;
 	
