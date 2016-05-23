@@ -5,3 +5,6 @@ Completion::~Completion()
 {
 }
 
+Completion::Completion()
+{
+}

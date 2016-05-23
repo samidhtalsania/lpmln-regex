@@ -3,16 +3,16 @@
 #include <algorithm>
 #include <string>
 
-bool operator< (const Predicate &left, const Predicate &right) 
+bool Predicate::operator< (const Predicate &right) const
 {
-	if(left.var != right.var)
-		return left.var < right.var;
+	if(this->var != right.var)
+		return this->var < right.var;
 	else
 	{
 		// If they are the same then they might have different constants.
-		if(left.hasConstant && right.hasConstant)
+		if(this->hasConstant && right.hasConstant)
 		{
-			std::set<std::string> s1(left.tokens.begin(), left.tokens.end());
+			std::set<std::string> s1(this->tokens.begin(), this->tokens.end());
 			std::set<std::string> s2(right.tokens.begin(), right.tokens.end());
 			
 			std::set<std::string> res;
@@ -27,17 +27,17 @@ bool operator< (const Predicate &left, const Predicate &right)
     
 }
 
-bool operator== (const Predicate &left, const Predicate &right) 
+bool Predicate::operator== (const Predicate &right) const
 {
-	return left.var == right.var;
-//	if(left.var != right.var && !left.hasConstant && !right.hasConstant)
-//		return left.var == right.var;
-//	else if(left.var == right.var)
+	return this->var == right.var;
+//	if(this->var != right.var && !this->hasConstant && !right.hasConstant)
+//		return this->var == right.var;
+//	else if(this->var == right.var)
 //	{
 //		// If they are the same then they might have different constants.
-//		if(left.hasConstant && right.hasConstant)
+//		if(this->hasConstant && right.hasConstant)
 //		{
-//			std::set<std::string> s1(left.tokens.begin(), left.tokens.end());
+//			std::set<std::string> s1(this->tokens.begin(), this->tokens.end());
 //			std::set<std::string> s2(right.tokens.begin(), right.tokens.end());
 //			
 //			std::set<std::string> res;

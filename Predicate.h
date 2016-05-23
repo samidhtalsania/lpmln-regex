@@ -8,8 +8,8 @@ public:
 	Predicate();
 	~Predicate();
 	
-	friend bool operator< (const Predicate &left, const Predicate &right);
-	friend bool operator== (const Predicate &left, const Predicate &right);
+	bool operator< (const Predicate &right) const;
+	bool operator== (const Predicate &right) const;
 	
 	std::string getVar() const { return var; }
 	

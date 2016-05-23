@@ -14,6 +14,7 @@
 #include <boost/program_options.hpp>
 
 #include <memory>
+#include <map>
 
 #include "Predicate.h"
 #include "Domain.h"
@@ -46,9 +47,10 @@ std::map<std::string, std::vector<lint>> predMapStr;
 
 std::vector<Domain> domains;
 std::set<std::string> domainList;
-std::vector<FactCompletion> facts;
+//std::vector<FactCompletion> facts;
 std::vector<RuleCompletion> rules;
 std::set<Predicate> predicates;
+std::multimap<std::string, FactCompletion> facts;
 
 std::string uniqueVars[] = {"_a","_b","_c","_d","_e","_f","_g","_h","_i","_j","_k","_l","_m","_n"};
 
@@ -64,9 +66,9 @@ int main(int argc,char *argv[])
 }
 
 
-// This does both matching and completion
+
 void matchPredicate(std::string str)
-{
+{;
 	boost::regex exprHardrule("([a-zA-Z]+)(\\()([A-Za-z0-9,]+)(\\))([.])");
 //	boost::regex exprSoftrule("([0-9.]+)([a-zA-Z]+)(\\()([A-Za-z0-9,]+)(\\))");
 	std::string::const_iterator start, end;
@@ -87,59 +89,8 @@ void matchPredicate(std::string str)
 		boost::split(tokens, temp, boost::is_any_of(","), boost::token_compress_on);
 		Predicate p(std::string(what[1]), tokens);
 		FactCompletion f(p);
-		facts.push_back(f);
-		
-//		int initCount = charCount;
-//		
-//		temp = "";
-//		for(unsigned int i=0; i<tokens.size();i++)
-//		{
-//			temp += uniqueVars[charCount++];
-//			temp += "=";
-//			ba::trim(tokens[i]);
-//			temp += tokens[i];
-//			temp += "^";
-//		}
-//		temp = temp.substr(0,temp.size()-1);
-//		temp.append("<=>");
-//		temp.append(what[1]).append(what[2]);
-//		std::string predName(what[1]);
-//		
-//		MAP::iterator it = predMapStr.find(predName);
-//		if(it != predMapStr.end())
-//			predMapStr[predName] = std::vector<lint>{TRUE,tokens.size()};
-//		else
-//			predMapStr.insert(std::pair<std::string, std::vector<lint>>(predName,std::vector<lint>{TRUE,tokens.size()})) ;
-//
-//		
-//		for(unsigned int i=0; i<tokens.size();i++)
-//		{
-//			if(initCount == sizeof(uniqueVars)/sizeof(uniqueVars[0]))
-//			{
-//				initCount = charCount = 0;
-//			}
-//			temp += uniqueVars[initCount++];
-//			temp += ",";
-//		}
-//		temp = temp.substr(0,temp.size()-1);
-//		temp += what[4];
-//		temp += ".";
-//		std::cout<<temp<<std::endl;
+		facts.insert(std::pair<std::string,FactCompletion>(f.head.getVar(),f));
 	}
-
-//	if(boost::regex_match(str, exprSoftrule) && found == std::string::npos)
-//	{
-//		boost::regex_search(start, end, what, exprSoftrule, flags);
-//		std::string temp = what[2];
-//		temp = what[1];
-//		temp = what[3];
-//		temp = what[4];
-//		temp = what[5];
-//		temp = what[6];
-//		temp = what[7];
-//		
-//		
-//	}
 }
 
 
@@ -313,12 +264,62 @@ int parse(std::string filename)
 	
 	
 	std::cout<<"\n//Completion\n";
-//	
-//	int a = domains.size();
-//	int b = facts.size();
-//	int c = rules.size();
-//	
+	
+	int a = facts.size();
+
+
 	// Completion post processing
+	
+	//Fact completion
+	  /* Create vector of deduplicated entries: */
+	std::vector<std::pair<std::string,FactCompletion>> keys_dedup;
+	std::unique_copy(std::begin(facts),
+				  std::end(facts),
+					std::back_inserter(keys_dedup),
+				  [](const std::pair<std::string,FactCompletion> &entry1,
+					 const std::pair<std::string,FactCompletion> &entry2) {
+					   return (entry1.first == entry2.first);
+				   }
+				 );
+
+	// All unique keys are in keys_dedup now.
+	for(auto &key : keys_dedup)
+	{
+		std::string strLhs;
+		std::string strRhs; 
+		std::pair <std::multimap<std::string,FactCompletion>::iterator, std::multimap<std::string, FactCompletion>::iterator> ret;
+		ret = facts.equal_range(key.first);
+		
+		int count = 0;
+		FactCompletion f;
+		for (std::multimap<std::string,FactCompletion>::iterator it=ret.first; it!=ret.second; ++it)
+		{
+			//it.second are FactCompletions
+			f = it->second;
+			std::vector<std::string> v = f.head.getTokens();
+			count = 0;
+			strRhs.append("(");
+			for(auto &str : v)
+			{
+				strRhs.append(uniqueVars[count++]);
+				strRhs.append("=");
+				strRhs.append(str);
+				strRhs.append(" ^ ");
+			}
+			strRhs = strRhs.substr(0,strRhs.size()-3);
+			strRhs.append(")");
+			strRhs.append(" v ");
+		}
+		strRhs = strRhs.substr(0,strRhs.size()-3);
+		strLhs.append(key.first);
+		strLhs.append("(");
+		count=0;
+		for(int i=0;i<f.head.getTokens().size();i++)
+			strLhs.append(uniqueVars[count++]).append(",");
+		strLhs = strLhs.substr(0,strLhs.size()-1);
+		strLhs.append(")");
+		std::cout<<strLhs<<" => "<<strRhs<<"."<<std::endl;
+	}
 	
 	//Pre processing => We need to know how many completion rules are needed before we try completion. 
 	
@@ -327,70 +328,92 @@ int parse(std::string filename)
 	//  ex L(A,b,C) is different from L(D,b,C) A,C,D are constants b is a variable,
 	//     L(a,b,c) is same as L(d,e,f) a,b,c,d,e,f are variables.
 	
-	for(unsigned int i=0; i<rules.size(); i++)
-	{
-		predicates.insert(rules.at(i).head);
-		predicates.insert(rules.at(i).body.begin(), rules.at(i).body.end());
-	}
+//	for(unsigned int i=0; i<rules.size(); i++)
+//	{
+//		predicates.insert(rules.at(i).head);
+//		predicates.insert(rules.at(i).body.begin(), rules.at(i).body.end());
+//	}
 	
 	// Predicates set has rules that need to be completed. 
 	// First complete facts
 	// Then complete rules while also checking for orphan vars
 	
-//	int d = predicates.size();
 	
 	
 	// Fact completion
-	for(unsigned int i=0;i<facts.size();i++)
-	{
-
-
-		int count = 0;
-		std::string op("");
-
-		op.append(facts.at(i).head.getVar());
-		op.append("(");
-		count = 0;
-		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
-		{
-			op.append(uniqueVars[count++]);
-			op.append(",");
-		}
-		op = op.substr(0,op.size()-1);
-		op.append(")");
-		
-		op.append("=>");
-		count=0;
-		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
-		{
-			op.append(uniqueVars[count++]);
-			op.append("=");
-			op.append(facts.at(i).head.getTokens().at(j));
-			op.append(" ^ ");
-		}
-		
-		op = op.substr(0,op.size()-3);
-		op.append(".");
-		std::cout<<op<<std::endl;
-		
-		//Since this paricular predicate is completed we set its completion bit to true if this is found in the predicates set. 
-		Predicate p = facts.at(i).head;
-		std::set<Predicate>::iterator it = predicates.find(p);
-		if(it != predicates.end())
-		{
-			predicates.erase(it);
-			p.setIsCompleted();
-			predicates.insert(p);
-		}
-		
-	}
+//	for(unsigned int i=0;i<facts.size();i++)
+//	{
+//		int count = 0;
+//		std::string op("");
+//
+//		op.append(facts.at(i).head.getVar());
+//		op.append("(");
+//		count = 0;
+//		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
+//		{
+//			op.append(uniqueVars[count++]);
+//			op.append(",");
+//		}
+//		op = op.substr(0,op.size()-1);
+//		op.append(")");
+//		
+//		op.append("=>");
+//		count=0;
+//		for(unsigned int j=0;j<facts.at(i).head.getTokens().size();j++)
+//		{
+//			op.append(uniqueVars[count++]);
+//			op.append("=");
+//			op.append(facts.at(i).head.getTokens().at(j));
+//			op.append(" ^ ");
+//		}
+//		
+//		op = op.substr(0,op.size()-3);
+//		op.append(".");
+//		std::cout<<op<<std::endl;
+//		
+//		//Since this paricular predicate is completed we set its completion bit to true if this is found in the predicates set. 
+//		Predicate p = facts.at(i).head;
+//		std::set<Predicate>::iterator it = predicates.find(p);
+//		if(it != predicates.end())
+//		{
+//			predicates.erase(it);
+//			p.setIsCompleted();
+//			predicates.insert(p);
+//		}
+//		
+//	}
 	
 	std::set<Predicate> predComp;
 	
+	/*
+	 Rule completion
+	 Needs to be redone
+	 Follow 4 step procedure.
 	
-	// Rule completion
-	// Needs to be redone
-	// Follow 4 step procedure.
+	* Example: Complete this program
+	* p(a, a)
+	* p(a, b)
+	* q(x) ← p(x, y) 
+	* 
+	* Step 1:
+	* FOL representation of the program above is
+	* p(a, a) ∧ p(a, b) ∧ ∀xy(p(x, y) → q(x)).
+	* 
+	* Rewrite each conjunctive term as an implication with the consequent in canonical form
+	* ∀xy(x = a ∧ y = a → p(x, y)) ∧ ∀xy(x = a ∧ y = b → p(x, y)) ∧ ∀xy(p(x, y) → q(x)) 
+	* 
+	* Step 2:
+	* Combine implication with the same predicate constant in the consequent into one
+	* ∀xy(((x = a ∧ y = a) ∨ (x = a ∧ y = b))) → p(x, y)) ∧ ∀xy(p(x, y) → q(x)).
+	* 
+	* Step 3: we identify, in each implication, the variables that occur in its antecedent but do not occur in the consequent, and minimize the scopes of thecorresponding quantifiers:
+	* ∀xy(((x = a ∧ y = a) ∨ (x = a ∧ y = b))) → p(x, y)) ∧ ∀x(∃y p(x, y) → q(x))
+	* 
+	* Step 4: we replace all implications by equivalences:
+	* In our case we will just add a new rule
+	* ∀xy(p(x, y) ↔ (x = a ∧ y = a) ∨ (x = a ∧ y = b)) ∧ ∀x(q(x) ↔ ∃y p(x, y))
+	*
+	*/
 	for (std::set<Predicate>::iterator it=predicates.begin(); it!=predicates.end(); ++it)
 	{
 		//Now for each predicate, get its body from the rules set concat it take care of orphan variables and output the results
@@ -399,258 +422,187 @@ int parse(std::string filename)
 		Predicate p = *it;
 		
 		// Ignore if it is already completed
-		if(!p.getIsCompleted())
-		{
-			
-			std::string op("");
-			
-			op += p.getVar();
-			op += "(";
-			std::vector<std::string> t = p.getTokens();
-			for(auto tit = t.begin(); tit != t.end(); ++tit)
-			{
-				op += (*tit);
-				op += ",";
-			}
-			op = op.substr(0, op.size()-1);
-			op += ") => ";
-			
-			// Collect all rules here
-			std::vector<RuleCompletion> comp;
-			
-			// Iterate over all the rules to find this predicate
-			for(std::vector<RuleCompletion>::iterator rit = rules.begin(); rit != rules.end() ; ++rit)
-			{
-				if(p == rit->head)
-					comp.push_back(*rit);
-			}
-			
-			// This predicate does not appear as the head of any rule.
-			//  Ignore
-			if(comp.size() == 0)
-				continue;
-			
-			
-			predComp.insert(p);
-			// comp vector will have all the rules which have p in its head.
-			// First determine the variables inside p.
-			
-			// Set of variables inside predicate p
-			std::vector<std::string> pVars = p.getTokens();
-			std::set<std::string> hSet(pVars.begin(), pVars.end());
-			
-			for (auto i=pVars.begin(); i!=pVars.end(); ++i)
-			{
-//				std::cout << *i <<"\n";
-				hSet.insert(*i);
-			}
-				
-			
-			//Set of variables inside the body of all predicates here p is head
-			std::set<std::string> bSet;
-			
-			// Fill bSet
-			// Determine the variables inside all of its body predicates
-			for(auto bit = comp.begin(); bit != comp.end(); ++bit)
-			{
-				// jt is a vector of predicates
-				for(auto jt = bit->body.begin(); jt != bit->body.end(); ++jt)
-				{
-					std::vector<std::string> temp = jt->getTokens();
-					std::copy(temp.begin(),temp.end(), std::inserter(bSet, bSet.end()));
-				}
-			}
+//		if(!p.getIsCompleted())
+//		{
+//			
+//			std::string op("");
+//			
+//			op += p.getVar();
+//			op += "(";
+//			std::vector<std::string> t = p.getTokens();
+//			for(auto tit = t.begin(); tit != t.end(); ++tit)
+//			{
+//				op += (*tit);
+//				op += ",";
+//			}
+//			op = op.substr(0, op.size()-1);
+//			op += ") => ";
+//			
+//			// Collect all rules here
+//			std::vector<RuleCompletion> comp;
+//			
+//			// Iterate over all the rules to find this predicate
+//			for(std::vector<RuleCompletion>::iterator rit = rules.begin(); rit != rules.end() ; ++rit)
+//			{
+//				if(p == rit->head)
+//					comp.push_back(*rit);
+//			}
+//			
+//			// This predicate does not appear as the head of any rule.
+//			//  Ignore
+//			if(comp.size() == 0)
+//				continue;
+//			
+//			
+//			predComp.insert(p);
+//			// comp vector will have all the rules which have p in its head.
+//			// First determine the variables inside p.
+//			
+//			// Set of variables inside predicate p
+//			std::vector<std::string> pVars = p.getTokens();
+//			std::set<std::string> hSet(pVars.begin(), pVars.end());
+//			
+//			for (auto i=pVars.begin(); i!=pVars.end(); ++i)
+//			{
+////				std::cout << *i <<"\n";
+//				hSet.insert(*i);
+//			}
+//				
+//			
+//			//Set of variables inside the body of all predicates here p is head
+//			std::set<std::string> bSet;
+//			
+//			// Fill bSet
+//			// Determine the variables inside all of its body predicates
+//			for(auto bit = comp.begin(); bit != comp.end(); ++bit)
+//			{
+//				// jt is a vector of predicates
+//				for(auto jt = bit->body.begin(); jt != bit->body.end(); ++jt)
+//				{
+//					std::vector<std::string> temp = jt->getTokens();
+//					std::copy(temp.begin(),temp.end(), std::inserter(bSet, bSet.end()));
+//				}
+//			}
+//
+//			// Remove all constants from head set
+//			for(auto hit = hSet.begin(); hit != hSet.end(); ++hit)
+//			{
+//				if(domainList.find(*hit) != domainList.end())
+//					hSet.erase(*hit);
+//			}
+//			
+//			// Remove all constants from body set
+//			for(auto bit = bSet.begin(); bit != bSet.end(); ++bit)
+//			{
+//				if(domainList.find(*bit) != domainList.end())
+//					bSet.erase(*bit);
+//			}
+//			
+//			// Head can have orphan variables, body cannot
+//			
+//			// Orphan variables set
+//			std::set<std::string> oSet;
+//			std::set_difference(bSet.begin(), bSet.end(), hSet.begin(), hSet.end(), std::inserter(oSet, oSet.end()));
+//			
+//			if(oSet.size() == 0)
+//			{
+//				
+//				// Just write out disjunctions of all the body predicates
+//				// loops through all the rules
+//				for(auto bit = comp.begin(); bit != comp.end() ; ++bit)
+//				{
+//					std::vector<Predicate> vec = bit->body;
+//					
+//					//loops through all the body predicates
+//					for(auto jt = vec.begin(); jt!= vec.end(); ++jt)
+//					{
+//						std::vector<std::string> str = jt->getTokens();
+//						op += jt->getVar();
+//						op += "(";
+//					
+//						// Lopps through all the variables in the body
+//						for(auto kt = str.begin(); kt!= str.end(); ++kt)
+//						{
+//							op += (*kt);
+//							op += ",";
+//						}
+//						op = op.substr(0,op.size()-1);
+//						op += ")";
+//						op += "^";
+//					}
+//					op = op.substr(0,op.size()-1);
+//					op += " v ";
+//				}
+//				op = op.substr(0,op.size() - 3);
+//				op += "."; 
+//				std::cout<<op<<"\n";
+//			}
+//			
+//			else
+//			{
+//				// Use exist 
+//				
+//				//First take a predicate. Check out its variables. See if any of it is an orphan variable. 
+//				//If you find one add Exist orphanVAr and that predicate.
+//				
+//				//Read predicate
+//				
+//				for(auto bit = comp.begin(); bit != comp.end() ; ++bit)
+//				{
+//					std::vector<Predicate> vec = bit->body;
+//					bool existUsed = false;
+//					std::string existStr("Exist ");
+//					std::set<std::string> existSet;
+//					std::string temp("");
+//					//loops through all the body predicates
+//					for(auto jt = vec.begin(); jt!= vec.end(); ++jt)
+//					{
+//						std::vector<std::string> str = jt->getTokens();
+//						temp += jt->getVar();
+//						temp += "(";
+//						
+//						for(auto kt = str.begin(); kt!= str.end(); ++kt)
+//						{
+//							temp += (*kt);
+//							if(oSet.find(*kt) != oSet.end())
+//							{
+//								existSet.insert(*kt);
+//								
+//								existUsed = true;
+//							}
+//							temp += ",";
+//						}
+//						temp = temp.substr(0,temp.size()-1);
+//						temp += ")";
+//						temp += "^";
+//					}
+//					temp = temp.substr(0,temp.size()-1);
+//					
+//					if(existUsed)
+//					{
+//						op += existStr;
+//						for(auto eit = existSet.begin(); eit != existSet.end(); ++eit)
+//						{
+//							op += *eit + " ,"; 
+//						}
+//						
+//						op = op.substr(0,op.size()-1);
+//						op += temp;
+//					}
+//						 
+//					else
+//						op += temp;
+//					op += " v ";
+//					
+//				}
+//				op = op.substr(0,op.size() - 3);
+//				op += "."; 
+//				std::cout<<op<<"\n";
+//			}
+//		}
+	}
 
-			// Remove all constants from head set
-			for(auto hit = hSet.begin(); hit != hSet.end(); ++hit)
-			{
-				if(domainList.find(*hit) != domainList.end())
-					hSet.erase(*hit);
-			}
-			
-			// Remove all constants from body set
-			for(auto bit = bSet.begin(); bit != bSet.end(); ++bit)
-			{
-				if(domainList.find(*bit) != domainList.end())
-					bSet.erase(*bit);
-			}
-			
-			// Head can have orphan variables, body cannot
-			
-			// Orphan variables set
-			std::set<std::string> oSet;
-			std::set_difference(bSet.begin(), bSet.end(), hSet.begin(), hSet.end(), std::inserter(oSet, oSet.end()));
-			
-			if(oSet.size() == 0)
-			{
-				
-				// Just write out disjunctions of all the body predicates
-				// loops through all the rules
-				for(auto bit = comp.begin(); bit != comp.end() ; ++bit)
-				{
-					std::vector<Predicate> vec = bit->body;
-					
-					//loops through all the body predicates
-					for(auto jt = vec.begin(); jt!= vec.end(); ++jt)
-					{
-						std::vector<std::string> str = jt->getTokens();
-						op += jt->getVar();
-						op += "(";
-					
-						// Lopps through all the variables in the body
-						for(auto kt = str.begin(); kt!= str.end(); ++kt)
-						{
-							op += (*kt);
-							op += ",";
-						}
-						op = op.substr(0,op.size()-1);
-						op += ")";
-						op += "^";
-					}
-					op = op.substr(0,op.size()-1);
-					op += " v ";
-				}
-				op = op.substr(0,op.size() - 3);
-				op += "."; 
-				std::cout<<op<<"\n";
-			}
-			
-			else
-			{
-				// Use exist 
-				
-				//First take a predicate. Check out its variables. See if any of it is an orphan variable. 
-				//If you find one add Exist orphanVAr and that predicate.
-				
-				//Read predicate
-				
-				for(auto bit = comp.begin(); bit != comp.end() ; ++bit)
-				{
-					std::vector<Predicate> vec = bit->body;
-					bool existUsed = false;
-					std::string existStr("Exist ");
-					std::set<std::string> existSet;
-					std::string temp("");
-					//loops through all the body predicates
-					for(auto jt = vec.begin(); jt!= vec.end(); ++jt)
-					{
-						std::vector<std::string> str = jt->getTokens();
-						temp += jt->getVar();
-						temp += "(";
-						
-						for(auto kt = str.begin(); kt!= str.end(); ++kt)
-						{
-							temp += (*kt);
-							if(oSet.find(*kt) != oSet.end())
-							{
-								existSet.insert(*kt);
-								
-								existUsed = true;
-							}
-							temp += ",";
-						}
-						temp = temp.substr(0,temp.size()-1);
-						temp += ")";
-						temp += "^";
-					}
-					temp = temp.substr(0,temp.size()-1);
-					
-					if(existUsed)
-					{
-						op += existStr;
-						for(auto eit = existSet.begin(); eit != existSet.end(); ++eit)
-						{
-							op += *eit + " ,"; 
-						}
-						
-						op = op.substr(0,op.size()-1);
-						op += temp;
-					}
-						 
-					else
-						op += temp;
-					op += " v ";
-					
-				}
-				op = op.substr(0,op.size() - 3);
-				op += "."; 
-				std::cout<<op<<"\n";
-			}
-		}
-	}
-	
-	//PredComp has all the predicates that have been completed. So mark their bit as completed.
-	Predicate p;
-	for(auto it = predComp.begin(); it!=predComp.end(); ++it)
-	{
-		auto pit = predicates.find(*it);
-		predicates.erase(pit);
-		p = *it;
-		p.setIsCompleted();
-		predicates.insert(p);
-	}
-	
-	
 	predComp.clear();
-	
-	// Final sanity check to see all predicates ahve been completed.
-	// For all those predicates not completed add negation in front.
-	for (std::set<Predicate>::iterator it=predicates.begin(); it!=predicates.end(); ++it)
-	{
-		
-		//TODO: Body might contain predicates which might only have constants. No need to complete that predicate. 
-		//Take the predicate
-		Predicate p = *it;
-		std::string op("");
-		// Ignore if it is already completed
-		if(!p.getIsCompleted())
-		{
-			//if it isnt then add negation in front of it
-			op += "!";
-			op += p.getVar();
-			op += "(";
-			
-			std::vector<std::string> t = p.getTokens();
-			
-			for(auto pit = t.begin(); pit != t.end(); ++pit)
-			{
-				op += *pit;
-				op += ",";
-			}
-			op = op.substr(0, op.size()-1);
-			op += ").\n";
-			std::cout << op;
-			
-			predComp.insert(p);
-		}
-	}
-	
-	//This entire part is redundant
-	//Final checking to see if all predicates have been completed. Theu should be by now.
-	
-//	for(auto it = predComp.begin(); it!=predComp.end(); ++it)
-//	{
-//		auto pit = predicates.find(*it);
-//		predicates.erase(pit);
-//		p = *it;
-//		p.setIsCompleted();
-//		predicates.insert(p);
-//	}
-//	
-//	predComp.clear();
-//	
-//	int count=0;
-//	for(auto it = predicates.begin(); it!=predicates.end(); ++it)
-//	{
-//		if(it->getIsCompleted())
-//			count++;
-//	}
-//	
-//	if(count == predicates.size())
-//		std::cout<<"//Correct";
-//	else
-//		std::cout<<"//InCorrect";
-
 	return 0;
 	
 }
