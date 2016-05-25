@@ -10,8 +10,8 @@ bool Predicate::operator< (const Predicate &right) const
 	else
 	{
 		// If they are the same then they might have different constants.
-		if(this->hasConstant && right.hasConstant)
-		{
+//		if(this->hasConstant && right.hasConstant)
+//		{
 			std::set<std::string> s1(this->tokens.begin(), this->tokens.end());
 			std::set<std::string> s2(right.tokens.begin(), right.tokens.end());
 			
@@ -21,8 +21,8 @@ bool Predicate::operator< (const Predicate &right) const
 			if(res.size() > 0)
 				return true;
 			return false;
-		}
-		return false;
+//		}
+//		return false;
 	}
     
 }

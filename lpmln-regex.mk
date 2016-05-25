@@ -13,7 +13,7 @@ CurrentFileName        :=
 CurrentFilePath        :=
 CurrentFileFullPath    :=
 User                   :=samidh
-Date                   :=22/05/16
+Date                   :=25/05/16
 CodeLitePath           :="/home/samidh/.codelite"
 LinkerName             :=/usr/bin/g++
 SharedObjectLinkerName :=/usr/bin/g++ -shared -fPIC
@@ -60,7 +60,7 @@ AS       := /usr/bin/as
 ## User defined environment variables
 ##
 CodeLiteDir:=/usr/share/codelite
-Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) $(IntermediateDirectory)/Domain.cpp$(ObjectSuffix) $(IntermediateDirectory)/Completion.cpp$(ObjectSuffix) $(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix) $(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix) 
+Objects0=$(IntermediateDirectory)/main.cpp$(ObjectSuffix) $(IntermediateDirectory)/Predicate.cpp$(ObjectSuffix) $(IntermediateDirectory)/Domain.cpp$(ObjectSuffix) $(IntermediateDirectory)/Completion.cpp$(ObjectSuffix) $(IntermediateDirectory)/FactCompletion.cpp$(ObjectSuffix) $(IntermediateDirectory)/RuleCompletion.cpp$(ObjectSuffix) $(IntermediateDirectory)/Variable.cpp$(ObjectSuffix) 
 
 
 
@@ -138,6 +138,14 @@ $(IntermediateDirectory)/RuleCompletion.cpp$(DependSuffix): RuleCompletion.cpp
 
 $(IntermediateDirectory)/RuleCompletion.cpp$(PreprocessSuffix): RuleCompletion.cpp
 	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/RuleCompletion.cpp$(PreprocessSuffix) "RuleCompletion.cpp"
+
+$(IntermediateDirectory)/Variable.cpp$(ObjectSuffix): Variable.cpp $(IntermediateDirectory)/Variable.cpp$(DependSuffix)
+	$(CXX) $(IncludePCH) $(SourceSwitch) "/home/samidh/Documents/lpmln/lpmln-regex/Variable.cpp" $(CXXFLAGS) $(ObjectSwitch)$(IntermediateDirectory)/Variable.cpp$(ObjectSuffix) $(IncludePath)
+$(IntermediateDirectory)/Variable.cpp$(DependSuffix): Variable.cpp
+	@$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) -MG -MP -MT$(IntermediateDirectory)/Variable.cpp$(ObjectSuffix) -MF$(IntermediateDirectory)/Variable.cpp$(DependSuffix) -MM "Variable.cpp"
+
+$(IntermediateDirectory)/Variable.cpp$(PreprocessSuffix): Variable.cpp
+	$(CXX) $(CXXFLAGS) $(IncludePCH) $(IncludePath) $(PreprocessOnlySwitch) $(OutputSwitch) $(IntermediateDirectory)/Variable.cpp$(PreprocessSuffix) "Variable.cpp"
 
 
 -include $(IntermediateDirectory)/*$(DependSuffix)

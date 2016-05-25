@@ -46,6 +46,8 @@
     <File Name="RuleCompletion.cpp"/>
     <File Name="input5.txt"/>
     <File Name="input6.txt"/>
+    <File Name="Variable.h"/>
+    <File Name="Variable.cpp"/>
   </VirtualDirectory>
   <Settings Type="Executable">
     <GlobalSettings>

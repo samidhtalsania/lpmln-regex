@@ -5,3 +5,11 @@ RuleCompletion::~RuleCompletion()
 {
 }
 
+
+
+RuleCompletion::RuleCompletion()
+{
+}
+
+
+

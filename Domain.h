@@ -5,6 +5,7 @@
 class Domain
 {
 public:
+	Domain(std::string str): domainVar(str){}
 	Domain();
 	~Domain();
 	
@@ -23,9 +24,19 @@ public:
 		domainVar = domainVariable;
 	}
 	
-	std::string getDomainVar()
+	std::string getDomainVar() const
 	{
 		return domainVar;
+	}
+	
+	bool operator< (const Domain& right) const
+	{
+		return domainVar < right.getDomainVar();
+	}
+	
+	bool operator== (const Domain& right) const
+	{
+		return domainVar == right.getDomainVar();
 	}
 	
 private :
