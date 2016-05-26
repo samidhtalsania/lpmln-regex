@@ -170,6 +170,25 @@ void removeConstants(std::set<std::string>& vec)
 	}
 }
 
+void removeConstantsPair(std::set<std::pair<std::string, std::string>>& vec)
+{
+	std::set<std::string>::iterator itr; 
+	for(auto &v : vec)
+	{
+		itr = domainList.find(v.first);
+		if(itr != domainList.end())
+			vec.erase(v);
+	}
+}
+
+struct cmp
+{
+	bool operator()(const std::pair<std::string, std::string>& left, const std::pair<std::string, std::string>& right) const
+	{
+		return left.first < right.first;
+	}
+};
+
 /* 
  * limitation: 
  * RHS of => can only contain one predicate. 
@@ -197,7 +216,9 @@ void matchRules(std::string str)
 		
 		//Split conjunctive body terms
 		boost::split(tokens,body,boost::is_any_of("^"), boost::token_compress_on);
-		std::set<std::string> orphanVars;
+//		std::set<std::string> orphanVars;
+		std::set<std::pair<std::string,std::string>> orphanVarsMap;
+		std::set<std::pair<std::string,std::string>> orphanVarsHeadMap;
 		std::vector<Predicate> predList;
 		
 		for(unsigned int i = 0; i<tokens.size(); i++)
@@ -216,13 +237,15 @@ void matchRules(std::string str)
 			
 			Predicate p(what[1],vars);
 			predList.push_back(p);
-			
-			orphanVars.insert(vars.begin(), vars.end());
+			int tempCount = 0;
+			for(auto &var : vars)
+				orphanVarsMap.insert(std::pair<std::string, std::string>(var,variables.find(p.getVar())->getPosMap().at(tempCount++).getDomainVar()));
+//			orphanVars.insert(vars.begin(), vars.end());
 		}
 		
 		
 		
-		std::set<std::string> orphanVarsHead;
+//		std::set<std::string> orphanVarsHead;
 		start = head.begin();
 		end = head.end();
 		boost::regex_search(start,end,what, tokenExpr, flags);
@@ -238,6 +261,7 @@ void matchRules(std::string str)
 
 		int count = 0;
 		std::map<int,std::pair<int, std::string>> varMap;
+		int tempCount = 0;
 		for(auto &str : vars)
 		{
 			if(isConstant(str))
@@ -248,20 +272,27 @@ void matchRules(std::string str)
 			}
 			else
 				count++;
+				
+			orphanVarsHeadMap.insert(std::pair<std::string, std::string>(str,variables.find(std::string(what[1]))->getPosMap().at(tempCount++).getDomainVar()));
 		}
 		
 		Predicate p(what[1],vars);
 		
-		orphanVarsHead.insert(vars.begin(), vars.end());
+//		orphanVarsHead.insert(vars.begin(), vars.end());
 
 		std::set<std::string> result;
 		
-		removeConstants(orphanVarsHead);
-		removeConstants(orphanVars);
+//		removeConstants(orphanVarsHead);
+//		removeConstants(orphanVars);
+		removeConstantsPair(orphanVarsMap);
+		removeConstantsPair(orphanVarsHeadMap);
+		
+		std::set<std::pair<std::string,std::string>> resultMap;
 
-		std::set_difference(orphanVars.begin(), orphanVars.end(), orphanVarsHead.begin(), orphanVarsHead.end(),std::inserter(result, result.end()));
+//		std::set_difference(orphanVars.begin(), orphanVars.end(), orphanVarsHead.begin(), orphanVarsHead.end(),std::inserter(result, result.end()));
+		std::set_difference(orphanVarsMap.begin(), orphanVarsMap.end(), orphanVarsHeadMap.begin(), orphanVarsHeadMap.end(),std::inserter(resultMap, resultMap.end()), cmp());
 
-		RuleCompletion r(p,predList, result, varMap);
+		RuleCompletion r(p,predList, resultMap, varMap);
 		rules.insert(std::pair<std::string,RuleCompletion>(r.head.getVar(),r));
 
 	}
@@ -411,6 +442,8 @@ int parse(std::string filename)
 		std::string strLhs;
 		std::string strRhs;
 		
+		std::pair<int,int> auxPos;
+		
 		std::pair <std::multimap<std::string,RuleCompletion>::iterator, std::multimap<std::string, RuleCompletion>::iterator> ret;
 		ret = rules.equal_range(key.first);
 		
@@ -419,7 +452,7 @@ int parse(std::string filename)
 		//Use this variable in constructing strLhs and strRhs 
 		std::set<Variable>::iterator itr = variables.find(key.first);
 		std::map<std::string, std::pair<int, std::string> > varMap;
-		std::set<std::string> orphanVarsSet;
+		std::set<std::pair<std::string,std::string>> orphanVarsSet;
 		
 		int count = 0;
 		for(auto &var : itr->getPosMap())
@@ -429,6 +462,8 @@ int parse(std::string filename)
 		
 		RuleCompletion r;
 		
+		
+		int auxCount = 0;
 		for (std::multimap<std::string,RuleCompletion>::iterator it=ret.first; it!=ret.second; ++it)
 		{
 			r = it->second;
@@ -442,12 +477,13 @@ int parse(std::string filename)
 				strRhs.append("EXIST ");
 				for(auto &orphanVars : r.getOrphanVars())
 				{
-					strRhs.append(orphanVars).append(",");
+					strRhs.append(orphanVars.first).append(",");
 				}
 				strRhs = strRhs.substr(0,strRhs.size()-1);
 				strRhs.append(" (");
 			}
 			
+			auxPos.first = strRhs.size() ;
 //			std::vector<std::pair<int, std::string>> constantPos;
 			//Append constants to strRhs
 			for(auto &constant : r.getConstantMap())
@@ -473,20 +509,23 @@ int parse(std::string filename)
 				//Then in that case we make use of localPos to fill variables.
 				//Otherwise we just use its own variables
 				
-				std::set<std::string>::iterator itr;
-				
+//				std::set<std::string>::iterator itr;
+//				auto itr;
 				int pos = 0;
 				for(auto &vars : pred.getTokens())
 				{
-					itr = orphanVarsSet.find(vars);
-					//it encounterd t1
-					if(pred.getVar() == key.first)
+//					auto itr = orphanVarsSet.find(vars);
+					auto itr = std::find_if(orphanVarsSet.begin(), orphanVarsSet.end(), [&](const std::pair<std::string, std::string>& val) -> bool{
+						return val.first == vars;
+					});
+					
+					if(pred.getVar().compare(key.first) == 0)
 					{
 						if(itr != orphanVarsSet.end())
 						{
 							strRhs.append(vars).append(",");
 						}
-						//it encounterd x,y,t
+						
 						else
 						{
 							for(auto &innerVar : varMap)
@@ -521,52 +560,83 @@ int parse(std::string filename)
 				strRhs = strRhs.substr(0,strRhs.size()-1);
 				strRhs.append(")");
 				strRhs.append(" ^ ");
-				
-				
-//				if(pred.getVar() == key.first)
-//				{
-//					for(int i=0; i < r.head.getTokens().size(); i++)
-//					{
-//						bool posFound = false;
-//						for(auto &pos : constantPos)
-//						{
-//							if(pos.first == i)
-//							{
-//								strRhs.append(pos.second);
-//								strRhs.append(",");
-////								localPos[i] = pos.second;
-//								posFound = true;
-//								break;
-//							}	
-//						}
-//						if(!posFound)
-//						{
-//							strRhs.append(pred.getTokens().at(i)).append(",");
-//						}
-//					}
-//				}
-//				else
-//				{
-//					for(auto &vars : pred.getTokens())
-//					{
-//						strRhs.append(vars).append(",");
-//					}
-//				}
-//				strRhs = strRhs.substr(0,strRhs.size()-1);
-//				strRhs.append(")");
-//				strRhs.append(" ^ ");
 			}
 			
 
 			strRhs = strRhs.substr(0,strRhs.size()-3);
 			strRhs.append(")");
 			if(r.checkOrphan())
+			{
+				auxPos.second = strRhs.size()-1;
 				strRhs.append(")");
+			}
 			strRhs.append(" v ");
+			
+			//Add code for aux stuff
+			//Aux variables needed only in case of orphans
+			if(r.checkOrphan())
+			{
+				std::string auxVar;
+				std::map<std::string,std::string> auxDeclMap;
+				
+				//First add declaration
+				auxVar.append("aux_").append(key.first).append("_").append(std::to_string(auxCount++));
+				std::string auxLhs(auxVar);
+				std::string auxRhs(auxVar);
+				std::string auxDecl(auxVar);
+				
+				
+				//Figure out domains to be added in aux declaration
+				//parse strRhs. Add all variables to auxLhs such that
+				// ex: (EXIST t1 (_b=False ^ shoot(t1) ^ next(t1,_c) ^ target(_a,_b,t1)))
+				// _b,t1,_c,_a should be added.
+				
+				auxDecl.append("(");
+				auxLhs.append("(");
+				
+				for(auto &auxDeclVar : varMap)
+				{
+					auxDecl.append(auxDeclVar.first).append(",");
+					auxLhs.append(auxDeclVar.second.second).append(",");
+				}
+				
+				for(auto &auxDeclVar : r.getOrphanVars())
+				{
+					auxDecl.append(auxDeclVar.second).append(",");
+					auxLhs.append(auxDeclVar.first).append(",");
+				}
+				
+				auxDecl = auxDecl.substr(0,auxDecl.size()-1);
+				auxLhs = auxLhs.substr(0,auxLhs.size()-1);
+				
+				auxDecl.append(")");
+				auxLhs.append(")");
+				
+				auxRhs = strRhs.substr(auxPos.first, auxPos.second-auxPos.first);
+				
+				strRhs.replace(auxPos.first,auxPos.second-auxPos.first, auxLhs);
+				
+				
+				std::cout << auxDecl << "\n";
+				std::cout << auxLhs << " <=> " << auxRhs << ".\n";
+				
+				
+//				boost::regex aux_expr_eql("([a-zA-Z0-9_]+)(=){1}([_0-9a-zA-Z]+)");
+//				boost::regex aux_expr_var("([_0-9a-zA-Z])([(])([_0-9a-zA-Z,])([)])");
+				
+				
+				//((([a-zA-Z0-9_]+)(=){1}([_0-9a-zA-Z]+))|(([_0-9a-zA-Z])([(])([_0-9a-zA-Z,])([)])))
+				
+				
+				//Second add equivalence
+				
+				
+			}
 		}
 		
 		strRhs = strRhs.substr(0,strRhs.size()-3);
-
+		
+		
 		strLhs.append(key.first).append("(");
 		
 		std::vector<std::string> v(varMap.size());
@@ -579,41 +649,7 @@ int parse(std::string filename)
 		
 		strLhs = strLhs.substr(0,strLhs.size()-1);
 		strLhs.append(")");
-		
-		
-		
-//		for(unsigned int i=0; i < r.head.getTokens().size(); i++)
-//		{
-//			bool posFound = false;
-//			for(auto &pos : localPos)
-//			{
-//				if(pos.first == i)
-//				{
-//					strLhs.append(pos.second).append(",");
-//					posFound = true;
-//					break;
-//				}	
-//			}
-//			if(!posFound)
-//				strLhs.append(r.head.getTokens().at(i)).append(",");
-//		}
-//		
-//		strLhs = strLhs.substr(0,strLhs.size()-1);
-//		strLhs.append(")");
-//		
-//		std::string str;
-//		std::string replaceStr = strLhs.substr(key.first.size(),strLhs.size()-1);
-//		size_t pos = strRhs.find(key.first, 0);
-//		while(pos != std::string::npos)
-//		{
-//			size_t subpos = strRhs.find(")", pos);
-//			strRhs = strRhs.erase(pos+key.first.size(), subpos + 1 - (pos + key.first.size()));
-//			strRhs = strRhs.insert(pos+key.first.size(), replaceStr);
-//			pos = strRhs.find(key.first, pos+1);
-//		}
-//		
-//		str = strLhs + " => " + strRhs + ".";
-//		std::cout << str << std::endl;		
+
 		std::cout<<strLhs<<" => "<<strRhs<<"."<<std::endl;
 	}
 	return 0;
